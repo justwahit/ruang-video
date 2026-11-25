@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String          @id @default(cuid())
+  name            String
+  username        String          @unique
+  passwordHash    String
+  role            String          @default("customer")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  requests        AccessRequest[] @relation("CustomerRequests")
+  decidedRequests AccessRequest[] @relation("AdminDecisions")
+  grantsReceived  VideoGrant[]    @relation("GrantCustomer")
+  grantsApproved  VideoGrant[]    @relation("GrantApprover")
+}
+
+model Video {
+  id           String          @id @default(cuid())
+  title        String
+  description  String          @default("")
+  storageKey   String          @unique
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  requests     AccessRequest[]
+  grants       VideoGrant[]
+}
+
+model AccessRequest {
+  id          String      @id @default(cuid())
+  customerId  String
+  videoId     String
+  status      String      @default("pending")
+  pendingKey  String?         @unique
+  requestedAt DateTime    @default(now())
+  decidedAt   DateTime?
+  decidedById String?
+  adminNote   String?
+  customer    User        @relation("CustomerRequests", fields: [customerId], references: [id], onDelete: Cascade)
+  video       Video       @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  decidedBy   User?       @relation("AdminDecisions", fields: [decidedById], references: [id], onDelete: SetNull)
+  grant       VideoGrant?
+
+  @@index([customerId, videoId, status])
+  @@index([status, requestedAt])
+}
+
+model VideoGrant {
+  id           String        @id @default(cuid())
+  requestId    String        @unique
+  customerId   String
+  videoId      String
+  approvedById String
+  startsAt     DateTime      @default(now())
+  expiresAt    DateTime
+  createdAt    DateTime      @default(now())
+  request      AccessRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  customer     User          @relation("GrantCustomer", fields: [customerId], references: [id], onDelete: Cascade)
+  video        Video         @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  approvedBy   User          @relation("GrantApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+
+  @@index([customerId, videoId, startsAt, expiresAt])
+}
