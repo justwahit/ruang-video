@@ -55,11 +55,13 @@ Format unggahan yang didukung adalah MP4, WebM, dan MOV. Simpan `VIDEO_UPLOAD_DI
 
 ## Kredensial Tes
 Admin
-```username: wahit
+```powershell
+username: wahit
 password: wahit30122002
 ```
 Customer
-```username: tes
+```powershell
+username: tes
 password: 9988776655
 ```
 ## Cek Command
